@@ -8,9 +8,9 @@ import java.io.IOException;
 
 public class Simulare extends JPanel {
     // Parametrii fizici
-    private double g = 1.0; // Gravitație
+    private double g = 1.0; // gravitatie
     private double m1 = 10.0, m2 = 10.0; // Mase
-    private double l1 = 150.0, l2 = 150.0; // Lungimi brațe
+    private double l1 = 150.0, l2 = 150.0; // Lungimi brate
     
     // Starea sistemului: unghiuri (radiani) și viteze unghiulare
     private double a1 = Math.PI / 2, a2 = Math.PI / 2;
@@ -19,7 +19,7 @@ public class Simulare extends JPanel {
     private File csvFile;
 
     public Simulare() {
-        csvFile = new File("physics_dataset_complex.csv");
+        csvFile = new File("physics_dataset.csv");
         // Scriem header-ul CSV-ului
         try (FileWriter writer = new FileWriter(csvFile)) {
             writer.write("time,theta1,theta2,vel1,vel2,x2,y2\n");
