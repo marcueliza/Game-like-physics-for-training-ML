@@ -63,7 +63,7 @@ public class Simulare extends JPanel {
 		a1 += a1_v;
 		a2 += a2_v;
 
-		// 
+		// locul de unde porneste 
 		double x0 = 600;
 		double y0 = 200;
 
