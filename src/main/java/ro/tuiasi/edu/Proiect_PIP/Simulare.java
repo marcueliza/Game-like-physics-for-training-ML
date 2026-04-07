@@ -21,7 +21,7 @@ public class Simulare extends JPanel {
 	private File csvFile;
 
 	public Simulare() {
-		csvFile = new File("physics_dataset.csv");
+		csvFile = new File("dataset.csv");
 		// csv
 		// theta1 = unghiul primului (rad)
 		// theta2= unghiul al doilea brat (rad)
@@ -63,8 +63,8 @@ public class Simulare extends JPanel {
 		a1 += a1_v;
 		a2 += a2_v;
 
-		// Calculăm poziția finală pentru vizualizare și dataset
-		double x0 = 400;
+		// 
+		double x0 = 600;
 		double y0 = 200;
 
 		double x1 = x0 + l1 * Math.sin(a1);
