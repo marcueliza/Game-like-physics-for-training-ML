@@ -5,103 +5,153 @@ import java.awt.*;
 import java.io.FileWriter;
 import java.io.File;
 import java.io.IOException;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import java.util.Properties;
 
 public class Simulare extends JPanel {
 
-	// parametrii
-	private double g = 1.0; // gravitatie
-	private double m1 = 10.0, m2 = 10.0; // mase
-	private double l1 = 150.0, l2 = 150.0; // lungimi bratep
-	private long startTime;
+    private static final long serialVersionUID = 1L;
 
-	// unghiuri si viteze unghiulare
-	private double a1 = Math.PI / 2, a2 = Math.PI / 2;
-	private double a1_v = 0, a2_v = 0;
+    // Parametrii fizici
+    private double g = 1.0; // gravitatie
+    private double m1 = 10.0, m2 = 10.0; // mase
+    private double l1 = 150.0, l2 = 150.0; // lungimi brate
+    private long startTime;
 
-	private File csvFile;
+    // Unghiuri si viteze unghiulare
+    private double a1 = Math.PI / 2, a2 = Math.PI / 2;
+    private double a1_v = 0, a2_v = 0;
 
-	public Simulare() {
-		csvFile = new File("dataset.csv");
-		// csv
-		// theta1 = unghiul primului (rad)
-		// theta2= unghiul al doilea brat (rad)
-		// viteza1 = viteza unghiulara brat 1
-		// viteza2 = viteza unghiulara brat 2
-		startTime = System.currentTimeMillis();
+    private File csvFile;
+    private Timer timer;
+    private boolean recording = true; 
 
-		try (FileWriter writer = new FileWriter(csvFile)) {
-			writer.write("timp,theta1,theta2,v1,v2,x1,,x2,y1,y2\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+    // Variabile pentru Kafka
+    private KafkaProducer<String, String> producer;
+    private static final String TOPIC = "pendul-date";
 
-		Timer timer = new Timer(8, e -> { // 8ms update timer 125 hz 
-			updatePhysics();
-			repaint();
-		});
-		timer.start();
-	}
+    public Simulare() {
+        csvFile = new File("dataset.csv");
+        startTime = System.currentTimeMillis();
 
-	private void updatePhysics() {
-		// ecuatii dif pt acceleratii
-		double num1 = -g * (2 * m1 + m2) * Math.sin(a1);
-		double num2 = -m2 * g * Math.sin(a1 - 2 * a2);
-		double num3 = -2 * Math.sin(a1 - a2) * m2;
-		double num4 = a2_v * a2_v * l2 + a1_v * a1_v * l1 * Math.cos(a1 - a2);
-		double den = l1 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
-		double a1_a = (num1 + num2 + num3 * num4) / den;
+        // Initializare Header CSV
+        try (FileWriter writer = new FileWriter(csvFile)) {
+            writer.write("timp,theta1,theta2,v1,v2,x1,y1,x2,y2\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-		num1 = 2 * Math.sin(a1 - a2);
-		num2 = (a1_v * a1_v * l1 * (m1 + m2));
-		num3 = g * (m1 + m2) * Math.cos(a1);
-		num4 = a2_v * a2_v * l2 * m2 * Math.cos(a1 - a2);
-		den = l2 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
-		double a2_a = num1 * (num2 + num3 + num4) / den;
+        // --- Configurare Kafka Producer ---
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "localhost:9092"); 
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        this.producer = new KafkaProducer<>(props);
+        // ----------------------------------
 
-		a1_v += a1_a;
-		a2_v += a2_a;
-		a1 += a1_v;
-		a2 += a2_v;
+        timer = new Timer(8, e -> { // 8ms update timer (~125 hz)
+            updatePhysics();
+            repaint();
+        });
 
-		// locul de unde porneste 
-		double x0 = 600;
-		double y0 = 200;
+        timer.start();
+    }
 
-		double x1 = x0 + l1 * Math.sin(a1);
-		double y1 = y0 + l1 * Math.cos(a1);
-		double x2 = x1 + l2 * Math.sin(a2);
-		double y2 = y1 + l2 * Math.cos(a2);
+    public void stop() {
+        if (timer != null && timer.isRunning()) {
+            timer.stop();
+            System.out.println("Simulare oprită.");
+        }
+        
+        if (producer != null) {
+            producer.close();
+            System.out.println("Conexiune Kafka închisă.");
+        }
+    }
 
-		saveToCSV(a1, a2, a1_v, a2_v, x1, y1, x2, y2);
-	}
+    public void stopRecording() {
+        this.recording = false;
+        System.out.println("Salvarea datelor a fost oprită. Pendulul continuă să se miște.");
+    }
 
-	private void saveToCSV(double t1, double t2, double v1, double v2, double x1, double y1, double x2, double y2) {
-		try (FileWriter writer = new FileWriter(csvFile, true)) {
-			double timpSimulare = (System.currentTimeMillis() - startTime) / 1000.0; // transformare in secunde
-			writer.write(timpSimulare + "," + t1 + "," + t2 + "," + v1 + "," + v2 + "," + x1 + "," + y1 + "," + x2 + ","
-					+ y2 + "\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+    private void updatePhysics() {
+        // Ecuatii diferentiale pentru acceleratii (Double Pendulum)
+        double num1 = -g * (2 * m1 + m2) * Math.sin(a1);
+        double num2 = -m2 * g * Math.sin(a1 - 2 * a2);
+        double num3 = -2 * Math.sin(a1 - a2) * m2;
+        double num4 = a2_v * a2_v * l2 + a1_v * a1_v * l1 * Math.cos(a1 - a2);
+        double den = l1 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+        double a1_a = (num1 + num2 + num3 * num4) / den;
 
-	@Override
-	protected void paintComponent(Graphics g2) {
-		
-		super.paintComponent(g2);
-		Graphics2D g = (Graphics2D) g2;
-		g.setStroke(new BasicStroke(2));
+        num1 = 2 * Math.sin(a1 - a2);
+        num2 = (a1_v * a1_v * l1 * (m1 + m2));
+        num3 = g * (m1 + m2) * Math.cos(a1);
+        num4 = a2_v * a2_v * l2 * m2 * Math.cos(a1 - a2);
+        den = l2 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+        double a2_a = num1 * (num2 + num3 + num4) / den;
 
-		int x0 = 400, y0 = 200;
-		int x1 = (int) (x0 + l1 * Math.sin(a1));
-		int y1 = (int) (y0 + l1 * Math.cos(a1));
-		int x2 = (int) (x1 + l2 * Math.sin(a2));
-		int y2 = (int) (y1 + l2 * Math.cos(a2));
+        a1_v += a1_a;
+        a2_v += a2_a;
+        a1 += a1_v;
+        a2 += a2_v;
 
-		g.drawLine(x0, y0, x1, y1);
-		g.fillOval(x1 - 10, y1 - 10, 20, 20);
-		g.drawLine(x1, y1, x2, y2);
-		g.fillOval(x2 - 10, y2 - 10, 20, 20);
-	}
+        // Calcul pozitii pentru desenare si logare
+        double x0 = 400; // Punctul de ancorare centrat
+        double y0 = 200;
 
+        double x1 = x0 + l1 * Math.sin(a1);
+        double y1 = y0 + l1 * Math.cos(a1);
+
+        double x2 = x1 + l2 * Math.sin(a2);
+        double y2 = y1 + l2 * Math.cos(a2);
+
+        if (recording) {
+            saveToCSV(a1, a2, a1_v, a2_v, x1, y1, x2, y2);
+            sendToKafka(a1, a2, a1_v, a2_v, x1, y1, x2, y2);
+        }
+    }
+
+    private void saveToCSV(double t1, double t2, double v1, double v2, double x1, double y1, double x2, double y2) {
+        try (FileWriter writer = new FileWriter(csvFile, true)) {
+            double timpSimulare = (System.currentTimeMillis() - startTime) / 1000.0;
+            writer.write(timpSimulare + "," + t1 + "," + t2 + "," + v1 + "," + v2 + "," + x1 + "," + y1 + "," + x2 + "," + y2 + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendToKafka(double t1, double t2, double v1, double v2, double x1, double y1, double x2, double y2) {
+        double timpSimulare = (System.currentTimeMillis() - startTime) / 1000.0;
+        // Format: timp, unghi1, unghi2, viteza1, viteza2, x1, y1, x2, y2
+        String mesajDate = timpSimulare + "," + t1 + "," + t2 + "," + v1 + "," + v2 + "," + x1 + "," + y1 + "," + x2 + "," + y2;
+        
+        ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC, mesajDate);
+        producer.send(record);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g2) {
+        super.paintComponent(g2);
+        Graphics2D g = (Graphics2D) g2;
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setStroke(new BasicStroke(3));
+
+        int x0 = 400, y0 = 200;
+        int x1 = (int) (x0 + l1 * Math.sin(a1));
+        int y1 = (int) (y0 + l1 * Math.cos(a1));
+        int x2 = (int) (x1 + l2 * Math.sin(a2));
+        int y2 = (int) (y1 + l2 * Math.cos(a2));
+
+        // Desenare brate
+        g.setColor(Color.BLACK);
+        g.drawLine(x0, y0, x1, y1);
+        g.drawLine(x1, y1, x2, y2);
+
+        // Desenare mase
+        g.setColor(Color.BLUE);
+        g.fillOval(x1 - 12, y1 - 12, 24, 24);
+        g.setColor(Color.RED);
+        g.fillOval(x2 - 12, y2 - 12, 24, 24);
+    }
 }

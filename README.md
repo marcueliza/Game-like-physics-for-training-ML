@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Game-like Physics for Training ML
 
 Platformă open-source pentru generarea, stocarea și gestionarea de volume mari de date de simulare fizică, destinate antrenării modelelor de machine learning.
@@ -180,3 +181,6 @@ project-root/
 ├─ pom.xml
 ├─ README.md
 └─ .gitignore
+=======
+# Salutari
+>>>>>>> Stashed changes
