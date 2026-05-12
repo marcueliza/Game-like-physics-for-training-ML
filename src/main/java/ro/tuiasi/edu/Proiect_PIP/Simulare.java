@@ -35,7 +35,7 @@ public class Simulare extends JPanel {
 			e.printStackTrace();
 		}
 
-		Timer timer = new Timer(8, e -> { // 8ms update timer 125 hz 
+		Timer timer = new Timer(8, e -> { // 8ms update timer 125 hz
 			updatePhysics();
 			repaint();
 		});
@@ -63,7 +63,7 @@ public class Simulare extends JPanel {
 		a1 += a1_v;
 		a2 += a2_v;
 
-		// locul de unde porneste 
+		// locul de unde porneste
 		double x0 = 600;
 		double y0 = 200;
 
@@ -87,7 +87,7 @@ public class Simulare extends JPanel {
 
 	@Override
 	protected void paintComponent(Graphics g2) {
-		
+
 		super.paintComponent(g2);
 		Graphics2D g = (Graphics2D) g2;
 		g.setStroke(new BasicStroke(2));
