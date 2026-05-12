@@ -6,44 +6,151 @@ import java.io.FileWriter;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Clasa {@code Simulare} implementează o simulare fizică în timp real a unui
+ * pendul dublu, utilizând un model bazat pe ecuații diferențiale neliniare.
+ *
+ * <h2>Scop</h2>
+ * <p>
+ * Această clasă face parte dintr-o platformă pentru generarea de date sintetice
+ * destinate antrenării modelelor de Machine Learning.
+ * </p>
+ *
+ * <h2>Funcționalități</h2>
+ * <ul>
+ * <li>Simulare fizică a unui pendul dublu</li>
+ * <li>Randare grafică în timp real folosind Swing</li>
+ * <li>Export automat al datelor în format CSV</li>
+ * </ul>
+ *
+ * <h2>Date generate</h2>
+ * <ul>
+ * <li>Timpul simulat (secunde)</li>
+ * <li>Unghiurile pendulelor (radiani)</li>
+ * <li>Vitezele unghiulare</li>
+ * <li>Pozițiile carteziene ale maselor</li>
+ * </ul>
+ *
+ * <h2>Model fizic</h2>
+ * <p>
+ * Sistemul este un pendul dublu ideal, fără frecare. Integrarea numerică este
+ * realizată folosind metoda Euler.
+ * </p>
+ *
+ * <h2>Format CSV</h2>
+ * 
+ * <pre>
+ * timp,theta1,theta2,v1,v2,x1,y1,x2,y2
+ * </pre>
+ *
+ * <h2>Limitări</h2>
+ * <ul>
+ * <li>Metoda Euler introduce erori numerice în timp</li>
+ * <li>Nu există conservare exactă a energiei</li>
+ * <li>Scrierea frecventă în fișier poate afecta performanța</li>
+ * </ul>
+ *
+ * <h2>Extensibilitate</h2>
+ * <ul>
+ * <li>Suport pentru alte sisteme fizice</li>
+ * <li>Export în alte formate (JSON, baze de date)</li>
+ * <li>Integrare cu API-uri externe</li>
+ * </ul>
+ *
+ * @version 1.0
+ */
 public class Simulare extends JPanel {
 
-	// parametrii
-	private double g = 1.0; // gravitatie
-	private double m1 = 10.0, m2 = 10.0; // mase
-	private double l1 = 150.0, l2 = 150.0; // lungimi bratep
+	/**
+	 * Parametrii fizici și starea curentă a sistemului.
+	 */
+
+	/**
+	 * Accelerația gravitațională utilizată în simulare. Unitate: scalată (nu
+	 * reprezintă m/s² real).
+	 */
+	private double g = 1.0;
+
+	/**
+	 * Masele celor două corpuri ale pendulului. Unitate: arbitrară (folosită pentru
+	 * stabilitatea simulării).
+	 */
+	private double m1 = 10.0, m2 = 10.0;
+
+	/**
+	 * Lungimile brațelor pendulului. Unitate: pixeli (folosite pentru randare
+	 * grafică).
+	 */
+	private double l1 = 150.0, l2 = 150.0;
+
+	/**
+	 * Momentul de start al simulării. Unitate: milisecunde
+	 * (System.currentTimeMillis).
+	 */
 	private long startTime;
 
-	// unghiuri si viteze unghiulare
+	/**
+	 * Unghiurile curente ale pendulelor. Unitate: radiani.
+	 */
 	private double a1 = Math.PI / 2, a2 = Math.PI / 2;
+
+	/**
+	 * Vitezele unghiulare ale pendulelor. Unitate: radiani / frame (integrare
+	 * Euler).
+	 */
 	private double a1_v = 0, a2_v = 0;
 
+	/**
+	 * Fișierul utilizat pentru stocarea datasetului generat. Format: CSV.
+	 */
 	private File csvFile;
 
+	/**
+	 * Inițializează simularea pendulului dublu.
+	 *
+	 * <p>
+	 * Creează fișierul CSV și scrie header-ul datasetului. Pornește bucla de
+	 * simulare folosind {@link javax.swing.Timer}.
+	 * </p>
+	 *
+	 * <p>
+	 * Frecvența de actualizare este aproximativ 125 Hz (8 ms).
+	 * </p>
+	 */
 	public Simulare() {
 		csvFile = new File("dataset.csv");
-		// csv
-		// theta1 = unghiul primului (rad)
-		// theta2= unghiul al doilea brat (rad)
-		// viteza1 = viteza unghiulara brat 1
-		// viteza2 = viteza unghiulara brat 2
 		startTime = System.currentTimeMillis();
 
 		try (FileWriter writer = new FileWriter(csvFile)) {
-			writer.write("timp,theta1,theta2,v1,v2,x1,,x2,y1,y2\n");
+			writer.write("timp,theta1,theta2,v1,v2,x1,x2,y1,y2\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		Timer timer = new Timer(8, e -> { // 8ms update timer 125 hz 
+		Timer timer = new Timer(8, e -> { // 8ms update timer 125 hz
 			updatePhysics();
 			repaint();
 		});
 		timer.start();
 	}
 
+	/**
+	 * Actualizează starea fizică a sistemului.
+	 *
+	 * <p>
+	 * Calculează accelerațiile unghiulare folosind ecuațiile pendulului dublu și
+	 * aplică integrarea numerică (Euler).
+	 * </p>
+	 *
+	 * <p>
+	 * Determină pozițiile carteziene ale maselor și trimite rezultatele către
+	 * metoda de salvare.
+	 * </p>
+	 */
 	private void updatePhysics() {
-		// ecuatii dif pt acceleratii
+		/**
+		 * Acestea sunt ecuatiile diferentiale pentru pendul.
+		 */
 		double num1 = -g * (2 * m1 + m2) * Math.sin(a1);
 		double num2 = -m2 * g * Math.sin(a1 - 2 * a2);
 		double num3 = -2 * Math.sin(a1 - a2) * m2;
@@ -63,7 +170,6 @@ public class Simulare extends JPanel {
 		a1 += a1_v;
 		a2 += a2_v;
 
-		// locul de unde porneste 
 		double x0 = 600;
 		double y0 = 200;
 
@@ -75,6 +181,22 @@ public class Simulare extends JPanel {
 		saveToCSV(a1, a2, a1_v, a2_v, x1, y1, x2, y2);
 	}
 
+	/**
+	 * Salvează starea curentă a simulării în fișierul CSV.
+	 *
+	 * <p>
+	 * Fiecare apel adaugă o linie nouă în dataset.
+	 * </p>
+	 *
+	 * @param t1 unghiul primului pendul (radiani)
+	 * @param t2 unghiul celui de-al doilea pendul (radiani)
+	 * @param v1 viteza unghiulară a primului pendul
+	 * @param v2 viteza unghiulară a celui de-al doilea pendul
+	 * @param x1 coordonata X a primului punct
+	 * @param y1 coordonata Y a primului punct
+	 * @param x2 coordonata X a celui de-al doilea punct
+	 * @param y2 coordonata Y a celui de-al doilea punct
+	 */
 	private void saveToCSV(double t1, double t2, double v1, double v2, double x1, double y1, double x2, double y2) {
 		try (FileWriter writer = new FileWriter(csvFile, true)) {
 			double timpSimulare = (System.currentTimeMillis() - startTime) / 1000.0; // transformare in secunde
@@ -85,9 +207,19 @@ public class Simulare extends JPanel {
 		}
 	}
 
+	/**
+	 * Desenează pendulul pe ecran.
+	 *
+	 * <p>
+	 * Metoda este apelată automat de Swing la fiecare repaint. Redă poziția curentă
+	 * a celor două mase și a brațelor.
+	 * </p>
+	 *
+	 * @param g2 contextul grafic furnizat de Swing
+	 */
 	@Override
 	protected void paintComponent(Graphics g2) {
-		
+
 		super.paintComponent(g2);
 		Graphics2D g = (Graphics2D) g2;
 		g.setStroke(new BasicStroke(2));
