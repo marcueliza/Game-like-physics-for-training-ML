@@ -9,10 +9,10 @@ local.properties
 .settings/
 .loadpath
 .recommenders
-<<<<<<< Updated upstream
-=======
 .env
->>>>>>> Stashed changes
+dataset.csv
+hf_repo/
+
 
 # External tool builders
 .externalToolBuilders/
