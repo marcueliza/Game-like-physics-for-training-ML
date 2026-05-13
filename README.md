@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+
 # Game-like Physics for Training ML
 
 Platformă open-source pentru generarea, stocarea și gestionarea de volume mari de date de simulare fizică, destinate antrenării modelelor de machine learning.
@@ -116,7 +116,32 @@ Obiectivul pe termen lung este construirea unei platforme open-source care să p
   - integritate Git mai bună,
   - commits mai curate.
 
+
+### Componenta de Integrare și Streaming
+- **Integrare Kafka (KRaft):** Am implementat un sistem de streaming în timp real pentru datele de simulare.
+- **Monitorizare Live:** Am creat o fereastră dedicată care consumă datele din Kafka și desenează grafice dinamice pentru parametrii fizici.
+- **Integrare Hugging Face:** Proiectul include un submodul dedicat pentru gestionarea și versionarea modelelor ML direct din ecosistemul Hugging Face.
+
 ---
+
+## Instrucțiuni de Pornire Rapidă (Quick Start)
+
+Pentru a facilita testarea sistemului, am inclus scripturi de automatizare care configurează mediul Kafka și pornesc monitorizarea.
+
+### Cerințe de sistem
+- **Kafka:** Trebuie să fie instalat în folderul `C:\kafka`.
+- **Java:** JDK 17 sau mai nou.
+
+### Pași de rulare:
+1. **Pornire Infrastructură:** Dublu-click pe `START_PROIECT_KAFKA.bat`. 
+   - Acest script va curăța datele vechi, va formata stocarea KRaft și va porni atât serverul Kafka, cât și consola de monitorizare.
+2. **Pornire Aplicație:** Rulează clasa `App.java` din IDE (Eclipse/IntelliJ).
+3. **Monitorizare:** Datele vor începe să curgă în timp real în terminal și în graficele de monitorizare live.
+
+---
+
+## Securitate și Date
+Fișierele mari precum `dataset.csv`, folderul `tmp/` de Kafka și submodulul `hf_repo/` sunt incluse în `.gitignore` pentru a păstra repository-ul ușor. Modelele și seturile de date se generează local la prima rulare a sistemului.
 
 ## Ce mai trebuie implementat
 
@@ -181,6 +206,4 @@ project-root/
 ├─ pom.xml
 ├─ README.md
 └─ .gitignore
-=======
-# Salutari
->>>>>>> Stashed changes
+
