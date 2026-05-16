@@ -3,6 +3,11 @@ package ro.tuiasi.edu.Proiect_PIP;
 import junit.framework.TestCase;
 import java.io.File;
 
+/**
+ * Componenta de testare operationala pentru HuggingFaceUploader.
+ * Valideaza reactia sistemului la incarcarea fisierelor corecte, inexistente sau cu parametri nuli.
+ */
+
 public class HuggingFaceUploaderTest extends TestCase {
 
     /**

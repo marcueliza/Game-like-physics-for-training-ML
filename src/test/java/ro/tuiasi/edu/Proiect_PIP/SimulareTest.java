@@ -6,6 +6,11 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+/**
+ * Clasa de testare responsabila de validarea calculelor fizice ale pendulului 
+ * si de integritatea structurii fisierului CSV generat automat.
+ */
+
 public class SimulareTest extends TestCase {
 
     private Simulare simulare;

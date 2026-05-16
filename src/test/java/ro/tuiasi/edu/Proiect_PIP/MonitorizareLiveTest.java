@@ -3,6 +3,11 @@ package ro.tuiasi.edu.Proiect_PIP;
 import junit.framework.TestCase;
 import javax.swing.SwingUtilities;
 
+/**
+ * Validari de integrare concepute pentru interfata grafica MonitorizareLive.
+ * Controleaza stabilitatea conexiunii Kafka si randarea dinamica a graficelor.
+ */
+
 public class MonitorizareLiveTest extends TestCase {
 
     private MonitorizareLive monitor;

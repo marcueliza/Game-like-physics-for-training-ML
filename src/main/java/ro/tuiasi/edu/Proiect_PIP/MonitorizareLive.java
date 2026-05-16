@@ -17,6 +17,11 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 
+/**
+ * Clasa MonitorizareLive implementeaza o interfata grafica Swing ce permite
+ * urmarirea in timp real a unghiurilor pendulului prin grafice dinamice JFreeChart.
+ */
+
 public class MonitorizareLive extends JFrame {
     
     private static final long serialVersionUID = 1L;

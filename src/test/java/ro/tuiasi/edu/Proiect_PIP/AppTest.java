@@ -4,6 +4,11 @@ import junit.framework.TestCase;
 import java.io.File;
 import javax.swing.SwingUtilities;
 
+/**
+ * Verificari unitare destinate fluxului principal de executie 
+ * si functionalitatilor de pornire din clasa principala App.
+ */
+
 public class AppTest extends TestCase {
 
     private Simulare simulare;

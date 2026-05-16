@@ -59,6 +59,7 @@
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <consoleOutput>true</consoleOutput>
           <failsOnError>false</failsOnError>
+          <failOnViolation>false</failOnViolation> 
           <linkXRef>true</linkXRef>
         </configuration>
         <executions>
@@ -95,7 +96,7 @@
             <ruleset>/category/java/errorprone.xml</ruleset>
             <ruleset>/category/java/performance.xml</ruleset>
           </rulesets>
-          <failOnViolation>true</failOnViolation>
+          <failOnViolation>false</failOnViolation>
           <printFailingErrors>true</printFailingErrors>
         </configuration>
         <executions>

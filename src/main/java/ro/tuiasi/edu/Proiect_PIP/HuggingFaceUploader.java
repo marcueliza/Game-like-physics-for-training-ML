@@ -3,6 +3,11 @@ package ro.tuiasi.edu.Proiect_PIP;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Clasa HuggingFaceUploader se ocupa cu incarcarea automata a setului de date 
+ * rezultat in urma simularii pe platforma HuggingFace.
+ */
+
 public class HuggingFaceUploader {
 
     public static void upload(String filePath, String repoId, String token) throws Exception {
