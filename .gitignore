@@ -9,6 +9,10 @@ local.properties
 .settings/
 .loadpath
 .recommenders
+.env
+dataset.csv
+hf_repo/
+
 
 # External tool builders
 .externalToolBuilders/
