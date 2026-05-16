@@ -18,14 +18,16 @@ import java.util.Collections;
 import java.util.Properties;
 
 public class MonitorizareLive extends JFrame {
+    
+    private static final long serialVersionUID = 1L;
     private XYSeries serieUnghi1 = new XYSeries("Unghi Braț 1");
-    private XYSeries serieUnghi2 = new XYSeries("Unghi Braț 2"); // Seria nouă pentru brațul 2
+    private XYSeries serieUnghi2 = new XYSeries("Unghi Braț 2"); 
     private KafkaConsumer<String, String> consumer;
+    private volatile boolean running = true; // Flag pentru a opri bucla infinită în siguranță
 
     public MonitorizareLive() {
         super("Monitorizare Live Dublu Pendul (via Kafka)");
         
-        // Configurăm Layout-ul să aibă 2 rânduri (un grafic sub altul)
         setLayout(new GridLayout(2, 1));
 
         // --- Grafic 1 (Braț 1) ---
@@ -37,7 +39,6 @@ public class MonitorizareLive extends JFrame {
         // --- Grafic 2 (Braț 2) ---
         XYSeriesCollection dataset2 = new XYSeriesCollection(serieUnghi2);
         JFreeChart chart2 = ChartFactory.createXYLineChart("Oscilație Braț 2", "Timp (s)", "Unghi (rad)", dataset2);
-        // Schimbăm culoarea liniei pentru al doilea grafic ca să le deosebim (opțional)
         chart2.getXYPlot().getRenderer().setSeriesPaint(0, Color.BLUE);
         ChartPanel panel2 = new ChartPanel(chart2);
         add(panel2);
@@ -53,7 +54,7 @@ public class MonitorizareLive extends JFrame {
         this.consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Collections.singletonList("pendul-date"));
 
-        setSize(800, 800); // Mărim fereastra ca să încapă ambele grafice
+        setSize(800, 800); 
         setLocationRelativeTo(null);
         setVisible(true);
 
@@ -62,13 +63,12 @@ public class MonitorizareLive extends JFrame {
 
     private void ascutaKafka() {
         try {
-            while (true) {
+            // Folosim variabila running în loc de true direct, pentru a putea opri firul la teste
+            while (running) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
                 for (ConsumerRecord<String, String> record : records) {
-                    // Split la mesajul primit: timp, unghi1, unghi2
                     String[] valori = record.value().split(",");
                     
-                    // Verificăm dacă avem cel puțin 3 valori (timp, u1, u2)
                     if (valori.length >= 3) {
                         try {
                             double timp = Double.parseDouble(valori[0]);
@@ -76,11 +76,9 @@ public class MonitorizareLive extends JFrame {
                             double u2 = Double.parseDouble(valori[2]);
 
                             SwingUtilities.invokeLater(() -> {
-                                // Actualizăm Brațul 1
                                 serieUnghi1.addOrUpdate(timp, u1);
                                 if (serieUnghi1.getItemCount() > 100) serieUnghi1.remove(0);
 
-                                // Actualizăm Brațul 2
                                 serieUnghi2.addOrUpdate(timp, u2);
                                 if (serieUnghi2.getItemCount() > 100) serieUnghi2.remove(0);
                             });
@@ -90,8 +88,28 @@ public class MonitorizareLive extends JFrame {
                     }
                 }
             }
+        } catch (Exception e) {
+            // Prindem excepțiile când consumer-ul este trezit forțat (wakeup)
         } finally {
-            consumer.close();
+            if (consumer != null) {
+                consumer.close();
+            }
         }
+    }
+
+    /**
+     * Metodă nouă adăugată special pentru gestionarea resurselor și rularea testelor.
+     * Oprește bucla infinită și eliberează conexiunea Kafka.
+     */
+    public void stop() {
+        this.running = false; // Spune buclei while să se oprească
+        if (consumer != null) {
+            try {
+                consumer.wakeup(); // Deblochează consumer.poll() dacă era în așteptare
+            } catch (Exception e) {
+                // Ignorăm
+            }
+        }
+        System.out.println("Monitorizare live oprită în siguranță.");
     }
 }

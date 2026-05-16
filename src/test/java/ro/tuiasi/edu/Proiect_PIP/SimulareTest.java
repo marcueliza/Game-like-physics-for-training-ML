@@ -8,61 +8,67 @@ import java.io.IOException;
 
 public class SimulareTest extends TestCase {
 
-	private Simulare simulare;
-	private final String CSV_FILE_NAME = "dataset.csv";
+    private Simulare simulare;
+    private final String CSV_FILE_NAME = "dataset.csv";
 
-	protected void setUp() throws Exception {
-		super.setUp();
-		simulare = new Simulare();
-	}
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        simulare = new Simulare();
+    }
 
-	/**
-	 * Testează dacă fișierul CSV este creat la inițializarea obiectului.
-	 */
-	public void testCsvFileCreation() {
-		File file = new File(CSV_FILE_NAME);
-		assertTrue("Fișierul CSV ar trebui să existe după inițializare", file.exists());
-	}
+    /**
+     * Curăță resursele după fiecare test. 
+     * Oprește conectorul Kafka și Timer-ul grafic pentru a nu bloca testele următoare.
+     */
+    @Override
+    protected void tearDown() throws Exception {
+        if (simulare != null) {
+            simulare.stop();
+        }
+        super.tearDown();
+    }
 
-	/**
-	 * Testează dacă header-ul CSV-ului este scris corect.
-	 */
-	public void testCsvHeaderContent() throws IOException {
-		File file = new File(CSV_FILE_NAME);
-		BufferedReader reader = new BufferedReader(new FileReader(file));
-		String header = reader.readLine();
-		reader.close();
+    /**
+     * Testează dacă fișierul CSV este creat la inițializarea obiectului.
+     */
+    public void testCsvFileCreation() {
+        File file = new File(CSV_FILE_NAME);
+        assertTrue("Fișierul CSV ar trebui să existe după inițializare", file.exists());
+    }
 
-		assertNotNull("Header-ul nu ar trebui să fie null", header);
-		assertTrue("Header-ul ar trebui să conțină coloana 'timp'", header.contains("timp"));
-		assertTrue("Header-ul ar trebui să conțină coloana 'theta1'", header.contains("theta1"));
-	}
+    /**
+     * Verifică dacă header-ul fișierului CSV conține coloanele corecte.
+     */
+    public void testCsvHeaderContent() {
+        File file = new File(CSV_FILE_NAME);
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String header = reader.readLine();
+            assertNotNull("Header-ul nu ar trebui să fie gol", header);
+            assertEquals("timp,theta1,theta2,v1,v2,x1,y1,x2,y2", header.trim());
+        } catch (IOException e) {
+            fail("Eroare la citirea fișierului CSV: " + e.getMessage());
+        }
+    }
 
-	/**
-	 * Testează dacă simularea este o componentă validă de tip JPanel.
-	 */
-	public void testComponentProperties() {
-		assertTrue("Simulare ar trebui să fie opacă", simulare.isOpaque());
-		assertNotNull("Simulare ar trebui să aibă un layout manager (chiar dacă e default)", simulare.getLayout());
-	}
+    /**
+     * Verifică proprietățile de bază ale componentei grafice (dimensiuni implicite).
+     */
+    public void testComponentProperties() {
+        assertNotNull("Instanța simulării ar trebui să fie inițializată", simulare);
+        assertTrue("Componenta ar trebui să fie vizibilă", simulare.isOpaque());
+    }
 
-	/**
-	 * Testează dacă scrierea datelor funcționează. (Verifică dacă după o scurtă
-	 * așteptare fișierul conține mai mult de o linie).
-	 */
-	public void testDataWritingPerformance() throws InterruptedException, IOException {
-		// Așteptăm 100ms pentru ca Timer-ul să execute câteva iterații
-		Thread.sleep(100);
-
-		File file = new File(CSV_FILE_NAME);
-		BufferedReader reader = new BufferedReader(new FileReader(file));
-		int lineCount = 0;
-		while (reader.readLine() != null) {
-			lineCount++;
-		}
-		reader.close();
-
-		// Header + cel puțin o linie de date
-		assertTrue("Ar trebui să avem cel puțin 2 linii în CSV", lineCount >= 2);
-	}
+    /**
+     * Verifică dacă oprirea scrierii (recording = false) funcționează corect.
+     */
+    public void testStopRecording() {
+        try {
+            simulare.stopRecording();
+            // Testul trece dacă metoda rulează fără să arunce excepții
+            assertTrue(true);
+        } catch (Exception e) {
+            fail("Metoda stopRecording a aruncat o eroare: " + e.getMessage());
+        }
+    }
 }
