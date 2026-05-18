@@ -207,3 +207,4 @@ project-root/
 ├─ README.md
 └─ .gitignore
 
+echo "# Proiect pregatit pentru Demo-day" >> README.md
