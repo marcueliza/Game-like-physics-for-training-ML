@@ -16,6 +16,11 @@ public class SimulareTest extends TestCase {
     private Simulare simulare;
     private final String CSV_FILE_NAME = "dataset.csv";
 
+    /**
+     * Pregătește mediul de test prin instanțierea motorului de simulare.
+     *
+     * @throws Exception dacă configurarea eșuează
+     */
     @Override
     protected void setUp() throws Exception {
         super.setUp();
