@@ -12,6 +12,10 @@ local.properties
 .env
 dataset.csv
 hf_repo/
+.classpath
+.project
+.checkstyle
+target/
 
 
 # External tool builders
